@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 # ===============================
-# إعدادات الصفحة
+# إعداد الصفحة
 # ===============================
 st.set_page_config(
     page_title="الاستعلام عن رقم الجلوس",
@@ -10,97 +10,99 @@ st.set_page_config(
 )
 
 # ===============================
-# CSS احترافي (RTL + ألوان جامعية)
+# CSS احترافي (خلفية + ألوان + خط Bold)
 # ===============================
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+/* خط احترافي مشابه للمواقع */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&display=swap');
 
 html, body, [class*="css"] {
     direction: rtl;
     font-family: 'Cairo', sans-serif;
-    background-color: #F7F9FC;
+    background: linear-gradient(135deg, #e3f2fd, #e8f5e9);
 }
 
-/* الحاوية الرئيسية */
+/* الحاوية */
 .app-container {
-    max-width: 720px;
+    max-width: 760px;
     margin: auto;
+    padding: 25px;
 }
 
-/* العناوين */
+/* رأس الصفحة */
 .header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 35px;
 }
 .header h1 {
-    color: #0B3C5D;
-    font-weight: 700;
-    margin-bottom: 5px;
+    color: #0D47A1;
+    font-weight: 800;
 }
 .header h2 {
-    color: #1B5E20;
-    font-weight: 600;
-    margin-bottom: 5px;
+    color: #2E7D32;
+    font-weight: 700;
 }
 .header h3 {
-    color: #555;
-    font-weight: 500;
-    margin-bottom: 20px;
+    color: #333;
+    font-weight: 600;
 }
 
 /* كرت النتيجة */
 .card {
-    background: #FFFFFF;
-    border-radius: 14px;
-    padding: 28px;
-    border-right: 5px solid #0B3C5D;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-    margin-top: 20px;
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 30px;
+    border-right: 6px solid #0D47A1;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    margin-top: 25px;
 }
 
 /* عناصر البيانات */
 .item {
-    font-size: 17px;
+    font-size: 18px;
+    font-weight: 700;
     margin-bottom: 14px;
-    color: #222;
+    color: #1a1a1a;
 }
 
 /* زر البحث */
 div.stButton > button {
-    background-color: #0B3C5D;
+    background: linear-gradient(135deg, #1976D2, #42A5F5);
     color: white;
-    padding: 10px 30px;
-    font-size: 16px;
-    border-radius: 8px;
+    padding: 12px 35px;
+    font-size: 17px;
+    font-weight: 700;
+    border-radius: 10px;
     border: none;
 }
 div.stButton > button:hover {
-    background-color: #124A73;
+    background: linear-gradient(135deg, #1565C0, #1E88E5);
 }
 
 /* رسائل */
 .success {
     background-color: #E8F5E9;
-    border-right: 5px solid #2E7D32;
-    padding: 14px;
-    border-radius: 8px;
-    margin-top: 15px;
+    border-right: 6px solid #2E7D32;
+    padding: 16px;
+    border-radius: 10px;
+    font-weight: 700;
 }
 .error {
     background-color: #FDECEA;
-    border-right: 5px solid #B71C1C;
-    padding: 14px;
-    border-radius: 8px;
-    margin-top: 15px;
+    border-right: 6px solid #C62828;
+    padding: 16px;
+    border-radius: 10px;
+    font-weight: 700;
 }
 
 /* التذييل */
 .footer {
     text-align: center;
-    margin-top: 45px;
-    color: #666;
-    font-size: 14px;
+    margin-top: 50px;
+    color: #444;
+    font-size: 15px;
+    font-weight: 600;
 }
 
 @media (max-width: 600px) {
@@ -110,7 +112,7 @@ div.stButton > button:hover {
 """, unsafe_allow_html=True)
 
 # ===============================
-# واجهة العنوان
+# الواجهة
 # ===============================
 st.markdown('<div class="app-container">', unsafe_allow_html=True)
 
@@ -119,7 +121,7 @@ st.markdown("""
     <h1>جامعة المرقب</h1>
     <h2>كلية العلوم الصحية</h2>
     <h3>قسم المختبرات الطبية</h3>
-    <p>الاستعلام عن رقم الجلوس</p>
+    <p><strong>الاستعلام عن رقم الجلوس</strong></p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -127,23 +129,21 @@ st.markdown("""
 # إدخال رقم القيد
 # ===============================
 reg_input = st.text_input(
-    "🔢 أدخل رقم القيد",
-    placeholder="مثال: 223030759"
+    "🔢 رقم القيد",
+    placeholder="أدخل رقم القيد هنا"
 )
 
 # ===============================
-# زر البحث والمنطق
+# منطق البحث
 # ===============================
-if st.button("🔍 بحث"):
+if st.button("🔍 استعلام"):
     try:
-        # قراءة ملف Excel كنص (حل جذري)
         df = pd.read_excel("data.xlsx", dtype=str)
+        df = df.fillna("")  # مهم جدًا: يمنع الأخطاء لو الخانة فاضية
 
-        # تنظيف رقم القيد
         df["رقم القيد"] = df["رقم القيد"].str.strip()
         reg_input = reg_input.strip()
 
-        # البحث
         result = df[df["رقم القيد"] == reg_input]
 
         if not result.empty:
@@ -155,28 +155,31 @@ if st.button("🔍 بحث"):
             </div>
             """, unsafe_allow_html=True)
 
+            # القاعة الامتحانية (قد تكون فاضية)
+            hall = row.get("القاعة الامتحانية", "").strip()
+            hall_display = hall if hall else "— لم تُحدد بعد —"
+
             st.markdown(f"""
             <div class="card">
-                <div class="item"><strong>اسم الطالب:</strong> {row['اسم الطالب']}</div>
-                <div class="item"><strong>رقم القيد:</strong> {row['رقم القيد']}</div>
-                <div class="item"><strong>رقم الجلوس:</strong> {row['رقم الجلوس']}</div>
-                <div class="item"><strong>السنة الدراسية:</strong> {row['السنة الدراسية']}</div>
-                <div class="item"><strong>القاعة الامتحانية:</strong> {row['القاعة الامتحانية']}</div>
+                <div class="item">👤 اسم الطالب: {row.get('اسم الطالب','')}</div>
+                <div class="item">🆔 رقم القيد: {row.get('رقم القيد','')}</div>
+                <div class="item">🪑 رقم الجلوس: {row.get('رقم الجلوس','')}</div>
+                <div class="item">📚 السنة الدراسية: {row.get('السنة الدراسية','')}</div>
+                <div class="item">🏫 القاعة الامتحانية: {hall_display}</div>
             </div>
             """, unsafe_allow_html=True)
 
         else:
             st.markdown("""
             <div class="error">
-                ❌ لم يتم العثور على رقم القيد
+                ❌ رقم القيد غير موجود ضمن البيانات
             </div>
             """, unsafe_allow_html=True)
 
     except Exception as e:
         st.markdown(f"""
         <div class="error">
-            ⚠️ حدث خطأ أثناء قراءة البيانات<br>
-            {e}
+            ⚠️ خطأ في قراءة البيانات<br>{e}
         </div>
         """, unsafe_allow_html=True)
 
