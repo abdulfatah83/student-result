@@ -10,119 +10,89 @@ st.set_page_config(
 )
 
 # ===============================
-# CSS احترافي (RTL + ألوان + خط)
+# CSS (RTL + تنسيق احترافي)
 # ===============================
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&display=swap');
-
-html, body, [class*="css"] {
+html, body {
     direction: rtl;
-    font-family: 'Cairo', sans-serif;
-    background: linear-gradient(135deg, #e3f2fd, #e8f5e9);
+    font-family: Arial, sans-serif;
+    background-color: #f5f7fb;
 }
 
-/* الحاوية */
-.app-container {
-    max-width: 780px;
+.container {
+    max-width: 700px;
     margin: auto;
-    padding: 30px;
 }
 
-/* العنوان */
 .header {
     text-align: center;
-    margin-bottom: 35px;
+    margin-bottom: 30px;
 }
 .header h1 {
     color: #0D47A1;
-    font-weight: 800;
+    font-weight: bold;
 }
 .header h2 {
     color: #2E7D32;
-    font-weight: 700;
+    font-weight: bold;
 }
 .header h3 {
-    color: #333;
-    font-weight: 600;
+    color: #444;
 }
 
-/* زر */
-div.stButton > button {
-    background: linear-gradient(135deg, #1976D2, #42A5F5);
-    color: white;
-    padding: 12px 36px;
-    font-size: 17px;
-    font-weight: 700;
-    border-radius: 10px;
-    border: none;
-}
-
-/* رسائل */
-.success {
-    background-color: #E8F5E9;
-    border-right: 6px solid #2E7D32;
-    padding: 16px;
-    border-radius: 10px;
-    font-weight: 700;
-    margin-top: 20px;
-}
-.error {
-    background-color: #FDECEA;
-    border-right: 6px solid #C62828;
-    padding: 16px;
-    border-radius: 10px;
-    font-weight: 700;
-    margin-top: 20px;
-}
-
-/* بطاقة النتيجة */
 .card {
     background: #ffffff;
-    border-radius: 18px;
-    padding: 32px 36px;
-    border-right: 7px solid #0D47A1;
-    box-shadow: 0 12px 32px rgba(0,0,0,0.08);
-    margin-top: 25px;
+    padding: 25px;
+    border-radius: 12px;
+    border-right: 6px solid #0D47A1;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    margin-top: 20px;
 }
 
-/* صفوف */
 .result-row {
     display: flex;
     justify-content: space-between;
-    padding: 12px 0;
+    padding: 10px 0;
     border-bottom: 1px solid #eee;
 }
 .result-row:last-child {
     border-bottom: none;
 }
 
-/* العناوين */
 .result-label {
-    font-size: 16px;
-    font-weight: 700;
-    color: #0B3C5D;
-}
-.result-value {
-    font-size: 17px;
-    font-weight: 800;
-    color: #222;
+    font-weight: bold;
+    color: #0D47A1;
 }
 
-/* تذييل */
+.result-value {
+    font-weight: bold;
+    color: #000;
+}
+
+.success {
+    background-color: #E8F5E9;
+    border-right: 5px solid #2E7D32;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+.error {
+    background-color: #FDECEA;
+    border-right: 5px solid #C62828;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
 .footer {
     text-align: center;
-    margin-top: 50px;
-    color: #444;
-    font-size: 15px;
-    font-weight: 600;
-}
-
-@media (max-width: 600px) {
-    .result-row {
-        flex-direction: column;
-        align-items: flex-start;
-    }
+    margin-top: 40px;
+    color: #555;
+    font-size: 14px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -130,7 +100,7 @@ div.stButton > button {
 # ===============================
 # الواجهة
 # ===============================
-st.markdown('<div class="app-container">', unsafe_allow_html=True)
+st.markdown('<div class="container">', unsafe_allow_html=True)
 
 st.markdown("""
 <div class="header">
@@ -144,62 +114,72 @@ st.markdown("""
 # ===============================
 # إدخال رقم القيد
 # ===============================
-reg_input = st.text_input("🔢 رقم القيد", placeholder="أدخل رقم القيد")
+reg_input = st.text_input("🔢 أدخل رقم القيد")
 
 # ===============================
-# البحث
+# زر الاستعلام
 # ===============================
 if st.button("🔍 استعلام"):
-    df = pd.read_excel("data.xlsx", dtype=str).fillna("")
-    df.columns = df.columns.str.strip()
+    try:
+        # قراءة ملف Excel
+        df = pd.read_excel("data.xlsx", dtype=str).fillna("")
+        df.columns = df.columns.str.strip()
 
-    df["رقم القيد"] = df["رقم القيد"].str.strip()
-    reg_input = reg_input.strip()
+        reg_input = reg_input.strip()
+        df["رقم القيد"] = df["رقم القيد"].str.strip()
 
-    result = df[df["رقم القيد"] == reg_input]
+        result = df[df["رقم القيد"] == reg_input]
 
-    if not result.empty:
-        row = result.iloc[0]
-        hall = row.get("القاعة الامتحانية", "").strip() or "لم تُحدد بعد"
+        if not result.empty:
+            row = result.iloc[0]
+            hall = row.get("القاعة الامتحانية", "").strip()
+            hall_display = hall if hall else "لم تُحدد بعد"
 
-        st.markdown("""
-        <div class="success">✅ تم العثور على بيانات الطالب</div>
-        """, unsafe_allow_html=True)
+            st.markdown("""
+            <div class="success">✅ تم العثور على بيانات الطالب</div>
+            """, unsafe_allow_html=True)
 
+            html_result = f"""
+            <div class="card">
+
+                <div class="result-row">
+                    <div class="result-label">اسم الطالب</div>
+                    <div class="result-value">{row.get('اسم الطالب','')}</div>
+                </div>
+
+                <div class="result-row">
+                    <div class="result-label">رقم القيد</div>
+                    <div class="result-value">{row.get('رقم القيد','')}</div>
+                </div>
+
+                <div class="result-row">
+                    <div class="result-label">رقم الجلوس</div>
+                    <div class="result-value">{row.get('رقم الجلوس','')}</div>
+                </div>
+
+                <div class="result-row">
+                    <div class="result-label">السنة الدراسية</div>
+                    <div class="result-value">{row.get('السنة الدراسية','')}</div>
+                </div>
+
+                <div class="result-row">
+                    <div class="result-label">القاعة الامتحانية</div>
+                    <div class="result-value">{hall_display}</div>
+                </div>
+
+            </div>
+            """
+
+            st.markdown(html_result, unsafe_allow_html=True)
+
+        else:
+            st.markdown("""
+            <div class="error">❌ رقم القيد غير موجود</div>
+            """, unsafe_allow_html=True)
+
+    except Exception as e:
         st.markdown(f"""
-        <div class="card">
-
-            <div class="result-row">
-                <div class="result-label">اسم الطالب</div>
-                <div class="result-value">{row.get('اسم الطالب','')}</div>
-            </div>
-
-            <div class="result-row">
-                <div class="result-label">رقم القيد</div>
-                <div class="result-value">{row.get('رقم القيد','')}</div>
-            </div>
-
-            <div class="result-row">
-                <div class="result-label">رقم الجلوس</div>
-                <div class="result-value">{row.get('رقم الجلوس','')}</div>
-            </div>
-
-            <div class="result-row">
-                <div class="result-label">السنة الدراسية</div>
-                <div class="result-value">{row.get('السنة الدراسية','')}</div>
-            </div>
-
-            <div class="result-row">
-                <div class="result-label">القاعة الامتحانية</div>
-                <div class="result-value">{hall}</div>
-            </div>
-
-        </div>
-        """, unsafe_allow_html=True)
-
-    else:
-        st.markdown("""
-        <div class="error">❌ رقم القيد غير موجود</div>
+        <div class="error">⚠️ خطأ في قراءة البيانات<br>{e}</div>
         """, unsafe_allow_html=True)
 
 # ===============================
