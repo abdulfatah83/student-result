@@ -1,20 +1,19 @@
 import streamlit as st
 import pandas as pd
 
-# ===============================
+# =====================================
 # إعداد الصفحة
-# ===============================
+# =====================================
 st.set_page_config(
     page_title="الاستعلام عن رقم الجلوس",
     layout="centered"
 )
 
-# ===============================
-# CSS احترافي (خلفية + ألوان + خط Bold)
-# ===============================
+# =====================================
+# CSS احترافي (RTL + خلفية + ألوان + خط)
+# =====================================
 st.markdown("""
 <style>
-/* خط احترافي مشابه للمواقع */
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&display=swap');
 
 html, body, [class*="css"] {
@@ -23,14 +22,14 @@ html, body, [class*="css"] {
     background: linear-gradient(135deg, #e3f2fd, #e8f5e9);
 }
 
-/* الحاوية */
+/* الحاوية العامة */
 .app-container {
-    max-width: 760px;
+    max-width: 780px;
     margin: auto;
-    padding: 25px;
+    padding: 30px;
 }
 
-/* رأس الصفحة */
+/* العنوان */
 .header {
     text-align: center;
     margin-bottom: 35px;
@@ -48,29 +47,11 @@ html, body, [class*="css"] {
     font-weight: 600;
 }
 
-/* كرت النتيجة */
-.card {
-    background: #ffffff;
-    border-radius: 18px;
-    padding: 30px;
-    border-right: 6px solid #0D47A1;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    margin-top: 25px;
-}
-
-/* عناصر البيانات */
-.item {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 14px;
-    color: #1a1a1a;
-}
-
 /* زر البحث */
 div.stButton > button {
     background: linear-gradient(135deg, #1976D2, #42A5F5);
     color: white;
-    padding: 12px 35px;
+    padding: 12px 36px;
     font-size: 17px;
     font-weight: 700;
     border-radius: 10px;
@@ -87,6 +68,7 @@ div.stButton > button:hover {
     padding: 16px;
     border-radius: 10px;
     font-weight: 700;
+    margin-top: 20px;
 }
 .error {
     background-color: #FDECEA;
@@ -94,6 +76,44 @@ div.stButton > button:hover {
     padding: 16px;
     border-radius: 10px;
     font-weight: 700;
+    margin-top: 20px;
+}
+
+/* بطاقة النتيجة */
+.card {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 32px 36px;
+    border-right: 7px solid #0D47A1;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+    margin-top: 25px;
+    text-align: right;
+}
+
+/* صفوف النتيجة */
+.result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+}
+.result-row:last-child {
+    border-bottom: none;
+}
+
+/* العنوان */
+.result-label {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0B3C5D;
+}
+
+/* القيمة */
+.result-value {
+    font-size: 17px;
+    font-weight: 800;
+    color: #222;
 }
 
 /* التذييل */
@@ -106,14 +126,20 @@ div.stButton > button:hover {
 }
 
 @media (max-width: 600px) {
-    .item { font-size: 16px; }
+    .result-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .result-value {
+        margin-top: 4px;
+    }
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ===============================
-# الواجهة
-# ===============================
+# =====================================
+# واجهة العنوان
+# =====================================
 st.markdown('<div class="app-container">', unsafe_allow_html=True)
 
 st.markdown("""
@@ -125,21 +151,21 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ===============================
+# =====================================
 # إدخال رقم القيد
-# ===============================
+# =====================================
 reg_input = st.text_input(
     "🔢 رقم القيد",
     placeholder="أدخل رقم القيد هنا"
 )
 
-# ===============================
+# =====================================
 # منطق البحث
-# ===============================
+# =====================================
 if st.button("🔍 استعلام"):
     try:
         df = pd.read_excel("data.xlsx", dtype=str)
-        df = df.fillna("")  # مهم جدًا: يمنع الأخطاء لو الخانة فاضية
+        df = df.fillna("")
 
         df["رقم القيد"] = df["رقم القيد"].str.strip()
         reg_input = reg_input.strip()
@@ -155,17 +181,37 @@ if st.button("🔍 استعلام"):
             </div>
             """, unsafe_allow_html=True)
 
-            # القاعة الامتحانية (قد تكون فاضية)
             hall = row.get("القاعة الامتحانية", "").strip()
-            hall_display = hall if hall else "— لم تُحدد بعد —"
+            hall_display = hall if hall else "لم تُحدد بعد"
 
             st.markdown(f"""
             <div class="card">
-                <div class="item">👤 اسم الطالب: {row.get('اسم الطالب','')}</div>
-                <div class="item">🆔 رقم القيد: {row.get('رقم القيد','')}</div>
-                <div class="item">🪑 رقم الجلوس: {row.get('رقم الجلوس','')}</div>
-                <div class="item">📚 السنة الدراسية: {row.get('السنة الدراسية','')}</div>
-                <div class="item">🏫 القاعة الامتحانية: {hall_display}</div>
+
+                <div class="result-row">
+                    <div class="result-label">اسم الطالب</div>
+                    <div class="result-value">{row.get('اسم الطالب','')}</div>
+                </div>
+
+                <div class="result-row">
+                    <div class="result-label">رقم القيد</div>
+                    <div class="result-value">{row.get('رقم القيد','')}</div>
+                </div>
+
+                <div class="result-row">
+                    <div class="result-label">رقم الجلوس</div>
+                    <div class="result-value">{row.get('رقم الجلوس','')}</div>
+                </div>
+
+                <div class="result-row">
+                    <div class="result-label">السنة الدراسية</div>
+                    <div class="result-value">{row.get('السنة الدراسية','')}</div>
+                </div>
+
+                <div class="result-row">
+                    <div class="result-label">القاعة الامتحانية</div>
+                    <div class="result-value">{hall_display}</div>
+                </div>
+
             </div>
             """, unsafe_allow_html=True)
 
@@ -179,13 +225,13 @@ if st.button("🔍 استعلام"):
     except Exception as e:
         st.markdown(f"""
         <div class="error">
-            ⚠️ خطأ في قراءة البيانات<br>{e}
+            ⚠️ خطأ أثناء قراءة البيانات<br>{e}
         </div>
         """, unsafe_allow_html=True)
 
-# ===============================
+# =====================================
 # التذييل
-# ===============================
+# =====================================
 st.markdown("""
 <div class="footer">
     إعداد: الأستاذ عبدالفتاح محمد البكوش<br>
