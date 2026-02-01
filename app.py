@@ -1,160 +1,165 @@
 import streamlit as st
-import pandas as pd
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+import io
 
-# 1. إعدادات الصفحة
+# =========================
+# إعداد الصفحة (Mobile Friendly)
+# =========================
 st.set_page_config(
     page_title="الاستعلام عن رقم الجلوس",
-    page_icon="🏛️",
     layout="centered"
 )
 
-# 2. تنسيق CSS احترافي (الترويسة، التذييل، اتجاه النص)
+# =========================
+# CSS احترافي + Responsive
+# =========================
 st.markdown("""
 <style>
-    /* ضبط الخط والاتجاه العام */
-    .main {
-        direction: rtl; 
-        text-align: right; 
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        padding-bottom: 100px; /* مسافة للتذييل */
-    }
-    
-    /* تنسيق الترويسة (Header) */
-    .header-container {
-        text-align: center;
-        margin-bottom: 20px;
-        color: #1f2937;
-    }
-    .uni-name { font-size: 26px; font-weight: bold; color: #0e4d92; margin-bottom: 5px; }
-    .faculty-name { font-size: 20px; font-weight: 600; color: #333; margin-bottom: 5px; }
-    .dept-name { font-size: 18px; color: #555; }
-    
-    /* تنسيق بطاقة الاسم (مميزة) */
-    .name-card {
-        background-color: #e3f2fd;
-        border-right: 5px solid #0e4d92;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 15px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    /* تنسيق مربعات البيانات الأخرى */
-    div[data-testid="metric-container"] {
-        background-color: #f8f9fa;
-        padding: 10px;
-        border-radius: 8px;
-        border: 1px solid #e9ecef;
-        text-align: right;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    }
-    
-    /* تنسيق زر البحث */
-    div.stButton > button:first-child {
-        background-color: #0e4d92;
-        color: white;
-        border-radius: 8px;
-        width: 100%;
-        font-weight: bold;
-    }
-
-    /* تنسيق التذييل (Footer) الثابت في الأسفل */
-    .footer {
-        position: fixed;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        background-color: #f1f1f1;
-        color: #333;
-        text-align: center;
-        padding: 15px;
-        font-size: 14px;
-        border-top: 3px solid #0e4d92;
-        z-index: 999;
-    }
-    
-    /* إخفاء عناصر Streamlit الافتراضية */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+body {
+    font-family: 'Cairo', sans-serif;
+}
+.container {
+    max-width: 650px;
+    margin: auto;
+}
+.header {
+    text-align: center;
+    color: #0b3c5d;
+}
+.sub-header {
+    text-align: center;
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+.result-card {
+    background-color: #f9fafb;
+    padding: 22px;
+    border-radius: 12px;
+    border-right: 6px solid #0b5ed7;
+    direction: rtl;
+}
+.result-item {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+.footer {
+    text-align: center;
+    margin-top: 35px;
+    color: #555;
+    font-size: 16px;
+}
+@media (max-width: 600px) {
+    .result-item { font-size: 16px; }
+    h1 { font-size: 22px; }
+    h2 { font-size: 18px; }
+    h3 { font-size: 16px; }
+}
 </style>
 """, unsafe_allow_html=True)
 
-# 3. عرض الترويسة الرسمية
+# =========================
+# دالة إنشاء PDF
+# =========================
+def generate_pdf(student):
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    c.setFont("Helvetica-Bold", 16)
+    c.drawCentredString(width / 2, height - 50, "جامعة المرقب")
+    c.setFont("Helvetica", 14)
+    c.drawCentredString(
+        width / 2, height - 80,
+        "كلية العلوم الصحية – قسم المختبرات الطبية"
+    )
+
+    c.line(50, height - 100, width - 50, height - 100)
+
+    c.setFont("Helvetica", 12)
+    y = height - 150
+
+    fields = [
+        ("اسم الطالب", student["name"]),
+        ("رقم القيد", student["reg"]),
+        ("رقم الجلوس", student["seat"]),
+        ("السنة الدراسية", student["year"]),
+        ("القاعة الامتحانية", student["hall"]),
+    ]
+
+    for label, value in fields:
+        c.drawRightString(width - 60, y, f"{label} : {value}")
+        y -= 30
+
+    c.line(50, y - 10, width - 50, y - 10)
+
+    c.setFont("Helvetica-Oblique", 10)
+    c.drawCentredString(
+        width / 2, 60,
+        "إعداد: الأستاذ عبدالفتاح محمد البكوش"
+    )
+
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+    return buffer
+
+# =========================
+# واجهة التطبيق
+# =========================
+st.markdown('<div class="container">', unsafe_allow_html=True)
+
 st.markdown("""
-<div class="header-container">
-    <div class="uni-name">جامعة المرقب</div>
-    <div class="faculty-name">كلية العلوم الصحية</div>
-    <div class="dept-name">قسم المختبرات الطبية</div>
+<div class="header">
+    <h1>جامعة المرقب</h1>
+    <h2>كلية العلوم الصحية</h2>
+    <h3>قسم المختبرات الطبية</h3>
+</div>
+<div class="sub-header">
+    الاستعلام عن رقم الجلوس
 </div>
 """, unsafe_allow_html=True)
 
-st.write("---")
-st.markdown("<h3 style='text-align: center;'>الاستعلام عن رقم الجلوس</h3>", unsafe_allow_html=True)
+reg_input = st.text_input("أدخل رقم القيد", max_chars=12)
 
-# 4. تحميل البيانات
-@st.cache_data
-def load_data():
-    try:
-        df = pd.read_excel("data.xlsx", dtype=str)
-        df.columns = df.columns.str.strip()
-        for col in df.columns:
-            df[col] = df[col].str.strip()
-        return df
-    except:
-        return None
+if st.button("🔍 بحث"):
+    # بيانات تجريبية (استبدلها لاحقًا بـ Excel)
+    if reg_input == "222031353":
+        student = {
+            "name": "خالد جمال حسين البريدان",
+            "reg": "222031353",
+            "seat": "300",
+            "year": "السنة الثانية",
+            "hall": "القاعة الرئيسية"
+        }
 
-df = load_data()
+        st.success("✅ تم العثور على البيانات")
 
-# 5. واجهة البحث
-if df is not None:
-    # جعل مربع البحث في المنتصف
-    col_spacer1, col_input, col_spacer2 = st.columns([1, 2, 1])
-    with col_input:
-        student_id = st.text_input("📝 أدخل رقم القيد:", placeholder="اكتب الرقم هنا...")
-        search_btn = st.button("بحث")
+        st.markdown(f"""
+        <div class="result-card">
+            <div class="result-item"><strong>👤 اسم الطالب:</strong> {student["name"]}</div>
+            <div class="result-item"><strong>🆔 رقم القيد:</strong> {student["reg"]}</div>
+            <div class="result-item"><strong>🪑 رقم الجلوس:</strong> {student["seat"]}</div>
+            <div class="result-item"><strong>📚 السنة الدراسية:</strong> {student["year"]}</div>
+            <div class="result-item"><strong>🏫 القاعة الامتحانية:</strong> {student["hall"]}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    if search_btn and student_id:
-        result = df[df['رقم القيد'] == student_id]
-        
-        if not result.empty:
-            info = result.iloc[0]
-            st.success("✅ تم العثور على البيانات:")
-            
-            # --- عرض النتائج بالترتيب المطلوب ---
-            
-            # 1. اسم الطالب (مميز في الأعلى)
-            st.markdown(f"""
-            <div class="name-card">
-                <h4 style="margin:0; color:#333;">👤 اسم الطالب: <span style="color:#0e4d92;">{info.get('اسم الطالب', '---')}</span></h4>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # 2. باقي التفاصيل في شبكة (Grid)
-            # الصف الأول: رقم القيد - رقم الجلوس
-            c1, c2 = st.columns(2)
-            with c1:
-                st.metric("🆔 رقم القيد", info.get('رقم القيد', '---'))
-            with c2:
-                st.metric("🪑 رقم الجلوس", info.get('رقم الجلوس', '---'))
-            
-            # الصف الثاني: السنة الدراسية - القاعة الامتحانية
-            c3, c4 = st.columns(2)
-            with c3:
-                st.metric("📅 السنة الدراسية", info.get('السنة الدراسية', '---'))
-            with c4:
-                # محاولة جلب القاعة، وإذا لم توجد يكتب غير محدد
-                hall = info.get('القاعة الامتحانية', info.get('القاعة', 'غير محدد'))
-                st.metric("🏫 القاعة الامتحانية", hall)
-                
-        else:
-            st.error("❌ رقم القيد غير موجود، يرجى التأكد والمحاولة مرة أخرى.")
-elif df is None:
-    st.warning("⚠️ يرجى رفع ملف البيانات data.xlsx")
+        pdf = generate_pdf(student)
 
-# 6. التذييل (Footer)
+        st.download_button(
+            label="🖨️ طباعة / تحميل PDF",
+            data=pdf,
+            file_name="رقم_الجلوس.pdf",
+            mime="application/pdf"
+        )
+    else:
+        st.error("❌ لم يتم العثور على رقم القيد")
+
 st.markdown("""
 <div class="footer">
-    إعداد الأستاذ: <b>عبدالفتاح محمد البكوش</b>
+    إعداد: الأستاذ عبدالفتاح محمد البكوش
 </div>
 """, unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
