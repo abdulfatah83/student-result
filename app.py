@@ -4,102 +4,157 @@ import pandas as pd
 # 1. إعدادات الصفحة
 st.set_page_config(
     page_title="الاستعلام عن رقم الجلوس",
-    page_icon="🎓",
+    page_icon="🏛️",
     layout="centered"
 )
 
-# 2. تنسيق احترافي (CSS)
-# هذا الجزء يجعل النصوص عربية بشكل صحيح ويجمل الأزرار والخلفيات
+# 2. تنسيق CSS احترافي (الترويسة، التذييل، اتجاه النص)
 st.markdown("""
 <style>
-    /* اتجاه النص لليمين ونوع الخط */
+    /* ضبط الخط والاتجاه العام */
     .main {
         direction: rtl; 
         text-align: right; 
-        font-family: sans-serif;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        padding-bottom: 100px; /* مسافة للتذييل */
+    }
+    
+    /* تنسيق الترويسة (Header) */
+    .header-container {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #1f2937;
+    }
+    .uni-name { font-size: 26px; font-weight: bold; color: #0e4d92; margin-bottom: 5px; }
+    .faculty-name { font-size: 20px; font-weight: 600; color: #333; margin-bottom: 5px; }
+    .dept-name { font-size: 18px; color: #555; }
+    
+    /* تنسيق بطاقة الاسم (مميزة) */
+    .name-card {
+        background-color: #e3f2fd;
+        border-right: 5px solid #0e4d92;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* تنسيق مربعات البيانات الأخرى */
+    div[data-testid="metric-container"] {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        text-align: right;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
     
     /* تنسيق زر البحث */
     div.stButton > button:first-child {
-        background-color: #0e4d92; /* لون أزرق رسمي */
+        background-color: #0e4d92;
         color: white;
         border-radius: 8px;
-        padding: 0.5rem 2rem;
-        font-weight: bold;
         width: 100%;
-        border: none;
-    }
-    div.stButton > button:hover {
-        background-color: #09386d;
-        color: white;
+        font-weight: bold;
     }
 
-    /* تنسيق مربعات عرض النتائج */
-    div[data-testid="metric-container"] {
-        background-color: #f8f9fa;
+    /* تنسيق التذييل (Footer) الثابت في الأسفل */
+    .footer {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        background-color: #f1f1f1;
+        color: #333;
+        text-align: center;
         padding: 15px;
-        border-radius: 10px;
-        border: 1px solid #dee2e6;
-        text-align: right;
+        font-size: 14px;
+        border-top: 3px solid #0e4d92;
+        z-index: 999;
     }
     
-    /* إخفاء القائمة الجانبية والقوائم العلوية لتبدو كصفحة ويب عادية */
+    /* إخفاء عناصر Streamlit الافتراضية */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# 3. واجهة التطبيق
-st.markdown("<h1 style='text-align: center; color: #0e4d92;'>الاستعلام عن رقم الجلوس 🎓</h1>", unsafe_allow_html=True)
-st.markdown("<h5 style='text-align: center; color: gray;'>أدخل رقم القيد للحصول على بيانات الجلوس والقاعة</h5>", unsafe_allow_html=True)
+# 3. عرض الترويسة الرسمية
+st.markdown("""
+<div class="header-container">
+    <div class="uni-name">جامعة المرقب</div>
+    <div class="faculty-name">كلية العلوم الصحية</div>
+    <div class="dept-name">قسم المختبرات الطبية</div>
+</div>
+""", unsafe_allow_html=True)
+
 st.write("---")
+st.markdown("<h3 style='text-align: center;'>الاستعلام عن رقم الجلوس</h3>", unsafe_allow_html=True)
 
 # 4. تحميل البيانات
-try:
-    df = pd.read_excel("data.xlsx", dtype=str)
-    # تنظيف العناوين والبيانات من أي مسافات زائدة
-    df.columns = df.columns.str.strip()
-    for col in df.columns:
-        df[col] = df[col].str.strip()
-except Exception as e:
-    st.error("⚠️ عذراً، حدثت مشكلة في قراءة ملف البيانات.")
-    st.stop()
+@st.cache_data
+def load_data():
+    try:
+        df = pd.read_excel("data.xlsx", dtype=str)
+        df.columns = df.columns.str.strip()
+        for col in df.columns:
+            df[col] = df[col].str.strip()
+        return df
+    except:
+        return None
 
-# 5. مربع البحث
-col_search1, col_search2, col_search3 = st.columns([1, 2, 1])
-with col_search2:
-    student_id = st.text_input("رقم القيد:", placeholder="اكتب الرقم هنا...", label_visibility="collapsed")
-    search_btn = st.button("🔍 بحث عن النتيجة")
+df = load_data()
 
-# 6. منطق البحث والعرض
-if search_btn:
-    if student_id:
-        # البحث
+# 5. واجهة البحث
+if df is not None:
+    # جعل مربع البحث في المنتصف
+    col_spacer1, col_input, col_spacer2 = st.columns([1, 2, 1])
+    with col_input:
+        student_id = st.text_input("📝 أدخل رقم القيد:", placeholder="اكتب الرقم هنا...")
+        search_btn = st.button("بحث")
+
+    if search_btn and student_id:
         result = df[df['رقم القيد'] == student_id]
         
         if not result.empty:
-            st.success("✅ تم العثور على البيانات:")
-            st.write("") # مسافة فارغة
-            
-            # جلب بيانات الطالب في متغير واحد لسهولة الاستخدام
             info = result.iloc[0]
+            st.success("✅ تم العثور على البيانات:")
             
-            # عرض البيانات في عمودين متجاورين بشكل جميل
-            col1, col2 = st.columns(2)
+            # --- عرض النتائج بالترتيب المطلوب ---
             
-            with col1:
-                st.metric(label="👤 اسم الطالب", value=info.get('اسم الطالب', '---'))
-                st.metric(label="🆔 رقم القيد", value=info.get('رقم القيد', '---'))
+            # 1. اسم الطالب (مميز في الأعلى)
+            st.markdown(f"""
+            <div class="name-card">
+                <h4 style="margin:0; color:#333;">👤 اسم الطالب: <span style="color:#0e4d92;">{info.get('اسم الطالب', '---')}</span></h4>
+            </div>
+            """, unsafe_allow_html=True)
             
-            with col2:
-                st.metric(label="🪑 رقم الجلوس", value=info.get('رقم الجلوس', '---'))
-                st.metric(label="📅 السنة الدراسية", value=info.get('السنة الدراسية', '---'))
+            # 2. باقي التفاصيل في شبكة (Grid)
+            # الصف الأول: رقم القيد - رقم الجلوس
+            c1, c2 = st.columns(2)
+            with c1:
+                st.metric("🆔 رقم القيد", info.get('رقم القيد', '---'))
+            with c2:
+                st.metric("🪑 رقم الجلوس", info.get('رقم الجلوس', '---'))
+            
+            # الصف الثاني: السنة الدراسية - القاعة الامتحانية
+            c3, c4 = st.columns(2)
+            with c3:
+                st.metric("📅 السنة الدراسية", info.get('السنة الدراسية', '---'))
+            with c4:
+                # محاولة جلب القاعة، وإذا لم توجد يكتب غير محدد
+                hall = info.get('القاعة الامتحانية', info.get('القاعة', 'غير محدد'))
+                st.metric("🏫 القاعة الامتحانية", hall)
                 
         else:
-            st.warning("⚠️ رقم القيد هذا غير مسجل لدينا، يرجى التأكد والمحاولة مرة أخرى.")
-    else:
-        st.info("الرجاء كتابة رقم القيد في الخانة أعلاه.")
+            st.error("❌ رقم القيد غير موجود، يرجى التأكد والمحاولة مرة أخرى.")
+elif df is None:
+    st.warning("⚠️ يرجى رفع ملف البيانات data.xlsx")
 
-# تذييل بسيط
-st.markdown("<br><br><hr><center><small>نظام شؤون الطلاب الإلكتروني © 2026</small></center>", unsafe_allow_html=True)
+# 6. التذييل (Footer)
+st.markdown("""
+<div class="footer">
+    إعداد الأستاذ: <b>عبدالفتاح محمد البكوش</b>
+</div>
+""", unsafe_allow_html=True)
